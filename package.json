@@ -1,8 +1,8 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "deskpals",
-  "title": "deskpals",
-  "description": "Configure your deskpals with Raycast.",
+  "title": "Deskpals",
+  "description": "Configure your Deskpals with Raycast.",
   "icon": "extension-icon.png",
   "author": "kian",
   "platforms": [

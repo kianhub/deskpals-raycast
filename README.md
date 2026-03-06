@@ -1,3 +1,3 @@
-# deskpals
+# Deskpals
 
-Configure your deskpals with Raycast.
+Configure your Deskpals with Raycast.
