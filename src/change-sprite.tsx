@@ -1,6 +1,7 @@
 import { ActionPanel, Action, Icon, List, open, closeMainWindow, showToast, Toast } from "@raycast/api";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { readdirSync, existsSync } from "fs";
+import { execFileSync } from "child_process";
 import { join } from "path";
 import { homedir } from "os";
 import pokemon from "./pokemon.json";
@@ -70,13 +71,42 @@ function genLabel(gen: number): string {
   return gen === -1 ? "Custom" : `Gen ${gen}`;
 }
 
+function readActiveSprites(): Set<string> {
+  try {
+    const raw = execFileSync("plutil", [
+      "-extract", "selectedPokemonList", "raw", "-o", "-",
+      join(homedir(), "Library", "Preferences", "com.deskpals.app.plist"),
+    ]);
+    const json = Buffer.from(raw.toString().trim(), "base64").toString("utf-8");
+    const list: { name: string; gen: number }[] = JSON.parse(json);
+    return new Set(list.map((p) => `${p.name}:${p.gen}`));
+  } catch {
+    return new Set();
+  }
+}
+
+type Filter = "all" | "active";
+
 function displayName(name: string): string {
   return name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, " ");
 }
 
 export default function Command() {
   const [shiny, setShiny] = useState(false);
-  const customSprites = useMemo(() => discoverCustomSprites(), []);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const customSprites = useMemo(() => discoverCustomSprites(), [refreshKey]);
+  const activeSprites = useMemo(() => readActiveSprites(), [refreshKey]);
+
+  // Refresh active sprites when the command is opened/focused
+  useEffect(() => {
+    setRefreshKey((k) => k + 1);
+  }, []);
+
+  const isActive = useCallback(
+    (p: Pokemon) => activeSprites.has(`${p.name}:${p.gen}`),
+    [activeSprites],
+  );
 
   async function selectSprite(p: Pokemon) {
     const url =
@@ -93,39 +123,57 @@ export default function Command() {
     <List
       searchBarPlaceholder="Search sprites..."
       searchBarAccessory={
-        <List.Dropdown tooltip="Shiny" storeValue onChange={(value) => setShiny(value === "true")}>
-          <List.Dropdown.Item title="Normal" value="false" icon={Icon.Circle} />
-          <List.Dropdown.Item title="Shiny" value="true" icon={Icon.Star} />
+        <List.Dropdown
+          tooltip="Filter"
+          storeValue
+          onChange={(value) => {
+            const [s, f] = value.split(":");
+            setShiny(s === "shiny");
+            setFilter(f as Filter);
+          }}
+        >
+          <List.Dropdown.Section title="Normal">
+            <List.Dropdown.Item title="All Sprites" value="normal:all" icon={Icon.Circle} />
+            <List.Dropdown.Item title="Currently Active" value="normal:active" icon={Icon.Heartbeat} />
+          </List.Dropdown.Section>
+          <List.Dropdown.Section title="Shiny">
+            <List.Dropdown.Item title="All Sprites (Shiny)" value="shiny:all" icon={Icon.Star} />
+            <List.Dropdown.Item title="Currently Active (Shiny)" value="shiny:active" icon={Icon.Heartbeat} />
+          </List.Dropdown.Section>
         </List.Dropdown>
       }
     >
       {customSprites.length > 0 && (
         <List.Section key="custom" title="Custom">
-          {customSprites.map((p) => (
-            <List.Item
-              key={p.name}
-              title={displayName(p.name)}
-              subtitle="Custom"
-              icon={spriteIcon(p, false) ?? Icon.Brush}
-              actions={
-                <ActionPanel>
-                  <Action title="Select Sprite" icon={Icon.Checkmark} onAction={() => selectSprite(p)} />
-                </ActionPanel>
-              }
-            />
-          ))}
+          {customSprites
+            .filter((p) => filter === "all" || isActive(p))
+            .map((p) => (
+              <List.Item
+                key={p.name}
+                title={displayName(p.name)}
+                subtitle="Custom"
+                icon={spriteIcon(p, false) ?? Icon.Brush}
+                accessories={isActive(p) ? [{ icon: Icon.Heartbeat, tooltip: "Currently Active" }] : []}
+                actions={
+                  <ActionPanel>
+                    <Action title="Select Sprite" icon={Icon.Checkmark} onAction={() => selectSprite(p)} />
+                  </ActionPanel>
+                }
+              />
+            ))}
         </List.Section>
       )}
       {[1, 2, 3, 4].map((gen) => (
         <List.Section key={gen} title={`Gen ${gen}`}>
           {allPokemon
-            .filter((p) => p.gen === gen)
+            .filter((p) => p.gen === gen && (filter === "all" || isActive(p)))
             .map((p) => (
               <List.Item
                 key={p.name}
                 title={displayName(p.name)}
                 subtitle={genLabel(p.gen)}
                 icon={spriteIcon(p, shiny)}
+                accessories={isActive(p) ? [{ icon: Icon.Heartbeat, tooltip: "Currently Active" }] : []}
                 actions={
                   <ActionPanel>
                     <Action title="Select Sprite" icon={Icon.Checkmark} onAction={() => selectSprite(p)} />
