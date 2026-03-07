@@ -134,11 +134,11 @@ export default function Command() {
         >
           <List.Dropdown.Section title="Normal">
             <List.Dropdown.Item title="All Sprites" value="normal:all" icon={Icon.Circle} />
-            <List.Dropdown.Item title="Currently Active" value="normal:active" icon={Icon.Heartbeat} />
+            <List.Dropdown.Item title="Currently Active" value="normal:active" icon={Icon.Check} />
           </List.Dropdown.Section>
           <List.Dropdown.Section title="Shiny">
             <List.Dropdown.Item title="All Sprites (Shiny)" value="shiny:all" icon={Icon.Star} />
-            <List.Dropdown.Item title="Currently Active (Shiny)" value="shiny:active" icon={Icon.Heartbeat} />
+            <List.Dropdown.Item title="Currently Active (Shiny)" value="shiny:active" icon={Icon.Check} />
           </List.Dropdown.Section>
         </List.Dropdown>
       }
@@ -153,7 +153,7 @@ export default function Command() {
                 title={displayName(p.name)}
                 subtitle="Custom"
                 icon={spriteIcon(p, false) ?? Icon.Brush}
-                accessories={isActive(p) ? [{ icon: Icon.Heartbeat, tooltip: "Currently Active" }] : []}
+                accessories={isActive(p) ? [{ icon: Icon.Check, tooltip: "Currently Active" }] : []}
                 actions={
                   <ActionPanel>
                     <Action title="Select Sprite" icon={Icon.Checkmark} onAction={() => selectSprite(p)} />
@@ -173,7 +173,7 @@ export default function Command() {
                 title={displayName(p.name)}
                 subtitle={genLabel(p.gen)}
                 icon={spriteIcon(p, shiny)}
-                accessories={isActive(p) ? [{ icon: Icon.Heartbeat, tooltip: "Currently Active" }] : []}
+                accessories={isActive(p) ? [{ icon: Icon.Check, tooltip: "Currently Active" }] : []}
                 actions={
                   <ActionPanel>
                     <Action title="Select Sprite" icon={Icon.Checkmark} onAction={() => selectSprite(p)} />
