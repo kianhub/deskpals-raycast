@@ -98,9 +98,12 @@ export default function Command() {
   const customSprites = useMemo(() => discoverCustomSprites(), [refreshKey]);
   const activeSprites = useMemo(() => readActiveSprites(), [refreshKey]);
 
-  // Refresh active sprites when the command is opened/focused
+  // Poll active sprites so changes are picked up between Raycast opens
   useEffect(() => {
-    setRefreshKey((k) => k + 1);
+    const refresh = () => setRefreshKey((k) => k + 1);
+    refresh();
+    const interval = setInterval(refresh, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   const isActive = useCallback(
