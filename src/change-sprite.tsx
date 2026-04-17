@@ -28,7 +28,17 @@ function findAppSpritesDir(): string | null {
       for (const entry of readdirSync(derivedDataDir)) {
         if (entry.startsWith("deskpals-")) {
           candidates.push(
-            join(derivedDataDir, entry, "Build", "Products", "Debug", "deskpals.app", "Contents", "Resources", "Sprites"),
+            join(
+              derivedDataDir,
+              entry,
+              "Build",
+              "Products",
+              "Debug",
+              "deskpals.app",
+              "Contents",
+              "Resources",
+              "Sprites",
+            ),
           );
         }
       }
@@ -74,7 +84,11 @@ function genLabel(gen: number): string {
 function readActiveSprites(): Set<string> {
   try {
     const raw = execFileSync("plutil", [
-      "-extract", "selectedPokemonList", "raw", "-o", "-",
+      "-extract",
+      "selectedPokemonList",
+      "raw",
+      "-o",
+      "-",
       join(homedir(), "Library", "Preferences", "com.deskpals.app.plist"),
     ]);
     const json = Buffer.from(raw.toString().trim(), "base64").toString("utf-8");
@@ -106,10 +120,7 @@ export default function Command() {
     return () => clearInterval(interval);
   }, []);
 
-  const isActive = useCallback(
-    (p: Pokemon) => activeSprites.has(`${p.name}:${p.gen}`),
-    [activeSprites],
-  );
+  const isActive = useCallback((p: Pokemon) => activeSprites.has(`${p.name}:${p.gen}`), [activeSprites]);
 
   async function selectSprite(p: Pokemon) {
     const url =
